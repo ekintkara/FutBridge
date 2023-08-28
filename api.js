@@ -3,12 +3,8 @@ const { fetchUniqueTournaments,fetchLeaugeToSeason,fetchCompetitionToTeam } = re
 
 const app = express()
 const port = 3000
+const ipAddress = '192.168.1.100';
 
-
-
-module.exports = {
-  fetchUniqueTournaments,
-}
 
 
 app.get('/', (req, res) => {
@@ -51,6 +47,6 @@ app.get('/api/seasons/', async (req, res) => {
   })
 
 // Sunucuyu başlatma
-app.listen(port, () => {
+app.listen(port,ipAddress, () => {
   console.log(`Sunucu ${port} portunda çalışıyor.`)
 })
