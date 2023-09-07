@@ -7,10 +7,19 @@ const leagueArray = [
   312, 325, 328, 330, 336, 347, 355, 358, 373, 384, 410, 445, 463, 491, 544,
   615, 649, 679, 955, 971, 1024, 1786, 11621,
 ]
+
 const eventIdArray = []
+const eventIdFinisedOrEtc = []
+const eventArray = []
 
 function getRandomWaitTime() {
-  return Math.floor(Math.random() * (10000 - 5000 + 1)) + 5000;
+  return Math.floor(Math.random() * (10000 - 5000 + 1)) + 5000
+}
+
+cleanArrays() = ()=>{
+eventIdArray = [] 
+eventIdFinisedOrEtc = []
+ eventArray = []
 }
 
 async function scheduledEventsCronJob() {
@@ -39,10 +48,10 @@ async function scheduledEventsCronJob() {
     await new Promise((resolve) => setTimeout(resolve, getRandomWaitTime()))
     const apiUrl1 = `${apiUrlscheduled}${date1}`
     try {
-      const eventResponse = await axios.get(apiUrl1)
-      const eventArray = []
+      const response = await axios.get(apiUrl1)
+      const eventResponse = response.data.events
 
-      for (const event of eventResponse.data.events) {
+      for (const event of eventResponse) {
         if (leagueArray.includes(event.tournament.uniqueTournament.id)) {
           const eventObj = {
             id: event.id,
@@ -84,28 +93,78 @@ async function scheduledEventsCronJob() {
 }
 
 async function incidentsCronJob() {
-  if (eventIdArray) {
-    const results = [] // Sonuçları saklamak için bir dizi oluşturun
+  eventArray.forEach(event => {
+    if (event.statusDesc !== 'Not started' && event.statusDesc !== 'Postponed') {
+      eventIdFinisedOrEtc.push(event.id);
+    }
+  });
+  console.log(eventArray,"eventarray");
+  if (eventIdFinisedOrEtc) {
+    const results = [] 
 
-    for (const eventid of eventIdArray) {
+    for (const eventid of eventIdFinisedOrEtc) {
       await new Promise((resolve) => setTimeout(resolve, getRandomWaitTime()))
       try {
+
         const incidentsResponse = await axios
           .get(`https://api.sofascore.com/api/v1/event/${eventid}/incidents`)
           .catch((error) => {
             console.log('hata: ', error.message)
           })
-        console.log('incidents',incidentsResponse.data)
+        console.log('incidents atıldı')
         const forwardedResponse = await axios
           .post(
             'https://api20.futalert.co.uk/api/livescore/incidents',
-            incidentsResponse.data
+            incidentsResponse.incidents
           )
           .catch((error) => {
             console.log('hata: ', error.message)
           })
-        console.log('livescore')
-        results.push(forwardedResponse.data) // Sonucu diziye ekleyin
+        console.log('livescore atıldı')
+        results.push(forwardedResponse) 
+      } catch (error) {
+        console.error(
+          'hata mesajı :',
+          error.message,
+          `https://api.sofascore.com/api/v1/event/${eventid}/incidents`
+        )
+      }
+    }
+    cleanArrays()
+    return results 
+  }
+}
+
+async function lineupsCronJob() {
+  eventArray.forEach(event => {
+    if (event.statusDesc !== 'Not started' && event.statusDesc !== 'Postponed') {
+      eventIdFinisedOrEtc.push(event.id);
+    }
+  });
+  console.log(eventArray,"eventarray");
+  if (eventIdFinisedOrEtc) {
+    const results = [] 
+
+    for (const eventid of eventIdFinisedOrEtc) {
+      await new Promise((resolve) => setTimeout(resolve, getRandomWaitTime()))
+      try {
+
+        const lineupsResponse = await axios
+          .get(`https://api.sofascore.com/api/v1/event/${eventid}/lineups`)
+          .catch((error) => {
+            console.log('hata: ', error.message)
+          })
+        console.log('lineups atıldı')
+        const forwardedResponse = await axios
+          .post(
+            'https://api20.futalert.co.uk/api/livescore/lineups',
+            lineupsResponse.incidents
+          )
+          .catch((error) => {
+            console.log('hata: ', error.message)
+          })
+        console.log('livescore atıldı')
+        results.push(forwardedResponse) 
       } catch (error) {
         console.error(
           'hata mesajı :',
@@ -115,11 +174,12 @@ async function incidentsCronJob() {
       }
     }
 
-    return results // Tüm sonuçları döndürün
+    return results 
   }
 }
 
 module.exports = {
   scheduledEventsCronJob,
   incidentsCronJob,
+  lineupsCronJob
 }
