@@ -17,12 +17,6 @@ function getRandomWaitTime() {
   return Math.floor(Math.random() * (10000 - 5000 + 1)) + 5000
 }
 
-// function cleanArrays() {
-//   eventIdArray = []
-//   eventIdFinisedOrEtc = []
-//   eventArray = []
-// }
-
 async function scheduledEventsCronJob() {
   const today = new Date()
   const endDate = new Date(today)
