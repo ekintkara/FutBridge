@@ -5,8 +5,12 @@ const {
   lineupsCronJob,
 } = require('./services/FutCronService')
 
-cron.schedule('0 * * * *	', () => {
-  scheduledEventsCronJob()
+cron.schedule('*/1 * * * *	', () => {
+ 
+  console.log('job working', new Date())
+})
+
+ scheduledEventsCronJob()
     .then(() => {
       console.log('scheduledEventsCronJob completed')
       return incidentsCronJob()
@@ -18,6 +22,3 @@ cron.schedule('0 * * * *	', () => {
     .catch((error) => {
       console.error(error)
     })
-
-  console.log('job working', new Date())
-})

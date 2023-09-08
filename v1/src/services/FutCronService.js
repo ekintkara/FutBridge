@@ -1,4 +1,5 @@
 const axios = require('axios')
+const logger = require('../logger/FutCronLogger')
 
 const leagueArray = [
   8, 11, 13, 14, 16, 17, 18, 19, 20, 22, 23, 24, 25, 32, 34, 35, 36, 37, 38, 39,
@@ -16,11 +17,11 @@ function getRandomWaitTime() {
   return Math.floor(Math.random() * (10000 - 5000 + 1)) + 5000
 }
 
-cleanArrays() = ()=>{
-eventIdArray = [] 
-eventIdFinisedOrEtc = []
- eventArray = []
-}
+// function cleanArrays() {
+//   eventIdArray = []
+//   eventIdFinisedOrEtc = []
+//   eventArray = []
+// }
 
 async function scheduledEventsCronJob() {
   const today = new Date()
@@ -48,9 +49,14 @@ async function scheduledEventsCronJob() {
     await new Promise((resolve) => setTimeout(resolve, getRandomWaitTime()))
     const apiUrl1 = `${apiUrlscheduled}${date1}`
     try {
-      const response = await axios.get(apiUrl1)
-      const eventResponse = response.data.events
+      const response = await axios.get(apiUrl1).catch((error) => {
+        logger.log({
+          level: 'error',
+          message: error,
+        })
+      })
 
+      const eventResponse = response.data.events
       for (const event of eventResponse) {
         if (leagueArray.includes(event.tournament.uniqueTournament.id)) {
           const eventObj = {
@@ -67,9 +73,9 @@ async function scheduledEventsCronJob() {
         date: date1,
         data: eventArray,
       }
-      console.log('body', futRequestBody)
       try {
         await new Promise((resolve) => setTimeout(resolve, getRandomWaitTime()))
+
         const livescoreReq = await axios.post(
           'https://api20.futalert.co.uk/api/livescore/scheduledevents',
           futRequestBody
@@ -93,35 +99,36 @@ async function scheduledEventsCronJob() {
 }
 
 async function incidentsCronJob() {
-  eventArray.forEach(event => {
-    if (event.statusDesc !== 'Not started' && event.statusDesc !== 'Postponed') {
-      eventIdFinisedOrEtc.push(event.id);
+  eventArray.forEach((event) => {
+    if (
+      event.statusDesc !== 'Not started' &&
+      event.statusDesc !== 'Postponed'
+    ) {
+      eventIdFinisedOrEtc.push(event.id)
     }
-  });
-  console.log(eventArray,"eventarray");
+  })
   if (eventIdFinisedOrEtc) {
-    const results = [] 
+    const results = []
 
     for (const eventid of eventIdFinisedOrEtc) {
       await new Promise((resolve) => setTimeout(resolve, getRandomWaitTime()))
       try {
-
         const incidentsResponse = await axios
           .get(`https://api.sofascore.com/api/v1/event/${eventid}/incidents`)
           .catch((error) => {
-            console.log('hata: ', error.message)
+            console.log('hata sofascore: ', error.message)
           })
         console.log('incidents atıldı')
         const forwardedResponse = await axios
           .post(
             'https://api20.futalert.co.uk/api/livescore/incidents',
-            incidentsResponse.incidents
+            incidentsResponse.data
           )
           .catch((error) => {
-            console.log('hata: ', error.message)
+            console.log('hata futalert: ', error.message)
           })
         console.log('livescore atıldı')
-        results.push(forwardedResponse) 
+        results.push(forwardedResponse)
       } catch (error) {
         console.error(
           'hata mesajı :',
@@ -130,25 +137,27 @@ async function incidentsCronJob() {
         )
       }
     }
-    cleanArrays()
-    return results 
+
+    return results
   }
 }
 
 async function lineupsCronJob() {
-  eventArray.forEach(event => {
-    if (event.statusDesc !== 'Not started' && event.statusDesc !== 'Postponed') {
-      eventIdFinisedOrEtc.push(event.id);
+  eventArray.forEach((event) => {
+    if (
+      event.statusDesc !== 'Not started' &&
+      event.statusDesc !== 'Postponed'
+    ) {
+      eventIdFinisedOrEtc.push(event.id)
     }
-  });
-  console.log(eventArray,"eventarray");
+  })
+  console.log(eventArray, 'eventarray')
   if (eventIdFinisedOrEtc) {
-    const results = [] 
+    const results = []
 
     for (const eventid of eventIdFinisedOrEtc) {
       await new Promise((resolve) => setTimeout(resolve, getRandomWaitTime()))
       try {
-
         const lineupsResponse = await axios
           .get(`https://api.sofascore.com/api/v1/event/${eventid}/lineups`)
           .catch((error) => {
@@ -158,28 +167,28 @@ async function lineupsCronJob() {
         const forwardedResponse = await axios
           .post(
             'https://api20.futalert.co.uk/api/livescore/lineups',
-            lineupsResponse.incidents
+            lineupsResponse.data
           )
           .catch((error) => {
             console.log('hata: ', error.message)
           })
         console.log('livescore atıldı')
-        results.push(forwardedResponse) 
+        results.push(forwardedResponse)
       } catch (error) {
         console.error(
           'hata mesajı :',
           error.message,
-          `https://api.sofascore.com/api/v1/event/${eventid}/incidents`
+          `https://api.sofascore.com/api/v1/event/${eventid}/lineups`
         )
       }
     }
 
-    return results 
+    return results
   }
 }
 
 module.exports = {
   scheduledEventsCronJob,
   incidentsCronJob,
-  lineupsCronJob
+  lineupsCronJob,
 }
