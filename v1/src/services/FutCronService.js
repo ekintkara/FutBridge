@@ -50,7 +50,7 @@ async function scheduledEventsCronJob() {
 async function scheduledEventsJobsLoops(date1) {
   const apiUrlscheduled =
     'https://api.sofascore.com/api/v1/sport/football/scheduled-events/'
-  const apiToSend = 'http://localhost:3000/api/scheduledevents'
+  const apiToSend = 'http://localhost:63949/api/livescore/scheduledevents'
   console.log('date1', date1)
 
   await sleep(getRandomWaitTime())
@@ -115,7 +115,7 @@ async function scheduledEventsJobsLoops(date1) {
         })
       }
     }
-    // console.log(eventArray,"eventArray");
+
     console.log(eventIdFinisedOrEtc, 'eventIdFinisedOrEtc')
     for (const event of eventArray) {
       if (
@@ -125,71 +125,11 @@ async function scheduledEventsJobsLoops(date1) {
         eventIdFinisedOrEtc.push(event.id)
       }
     }
-    // console.log(eventArray[0].status.description,"tip");
-
-    // const transformedData = eventArray.map((event) => {
-    //   const transformedEvent = {
-    //     tournament: {
-    //       uniqueTournament: {
-    //        id: event.tournament.uniqueTournament.id,
-    //       },
-    //     },
-    //     status: {
-    //       description: event.status ? event.status.description : undefined,
-    //       type: event.status.type,
-    //     },
-    //     winnerCode: event.winnerCode,
-    //     homeTeam: {
-    //       name: event.homeTeam.name,
-    //       slug: event.homeTeam.slug,
-    //       shortName: event.homeTeam.shortName,
-    //       id: event.homeTeam.id,
-    //     },
-    //     awayTeam: {
-    //       name: event.awayTeam.name,
-    //       slug: event.awayTeam.slug,
-    //       shortName: event.awayTeam.shortName,
-    //       id: event.awayTeam.id,
-    //     },
-    //     homeScore: {
-    //       current: event.homeScore.current,
-    //       display: event.homeScore.display,
-    //       period1: event.homeScore.period1,
-    //       period2: event.homeScore.period2,
-    //       normaltime: event.homeScore.normaltime,
-    //     },
-    //     awayScore: {
-    //       current: event.awayScore.current,
-    //       display: event.awayScore.display,
-    //       period1: event.awayScore.period1,
-    //       period2: event.awayScore.period2,
-    //       normaltime: event.awayScore.normaltime,
-    //     },
-    //     time: {
-    //       injuryTime1: event.time.injuryTime1,
-    //       injuryTime2: event.time.injuryTime2,
-    //       currentPeriodStartTimestamp: event.time.currentPeriodStartTimestamp,
-    //     },
-    //     id: event.id,
-    //     startTimestamp: event.startTimestamp,
-    //     slug: event.slug,
-    //   }
-
-    //   return transformedEvent
-    // })
 
     const futRequestBody = {
       date: date1,
       data: eventArray,
     }
-    // eventArray.forEach((event) => {
-    //   if (
-    //     event.status.description !== 'Not started' &&
-    //     event.status.description !== 'Postponed'
-    //   ) {
-    //     eventIdFinisedOrEtc.push(event.id)
-    //   }
-    // })
 
     try {
       await sleep(getRandomWaitTime())
@@ -221,229 +161,66 @@ async function scheduledEventsJobsLoops(date1) {
 
 async function incidentsAndLineupsCronJob() {
   if (eventIdFinisedOrEtc.length > 0) {
-    // const results = []
-    const apiToSendIncidents = 'http://localhost:3000/api/incidents'
+    const apiToSendIncidents = 'http://localhost:63949/api/livescore/incidents'
     const apiToSendLineups = 'http://localhost:3000/api/lineups'
     console.log(eventIdFinisedOrEtc, 'eventIdFinisedOrEtc')
-
-    // for (const eventid of eventIdFinisedOrEtc) {
-    //   await new Promise((resolve) => setTimeout(resolve, getRandomWaitTime()))
-    //   console.log(eventIdFinisedOrEtc, 'eventid')
-    //   try {
-    //     const incidentsResponse = await axios
-    //       .get(`https://api.sofascore.com/api/v1/event/${eventid}/incidents`)
-    //       .catch((error) => {
-    //         console.log(error.message)
-    //       })
-    //       .then(() => {
-    //         console.log('incidents atıldı')
-    //       })
-    //     await new Promise((resolve) => setTimeout(resolve, getRandomWaitTime()))
-    //     const lineupsResponse = await axios
-    //       .get(`https://api.sofascore.com/api/v1/event/${eventid}/lineups`)
-    //       .catch((error) => {
-    //         console.log('hata: ', error.message)
-    //       })
-    //       .then(() => {
-    //         console.log('lineups atıldı')
-    //       })
-
-    //     const incidentsResBody = {
-    //       eventid: eventid,
-    //       data: incidentsResponse.data,
-    //     }
-    //     await axios
-    //       .post(apiToSendLineups, lineupsResponse.data)
-    //       .catch((error) => {
-    //         console.log('hata: ', error.message)
-    //       })
-    //       .then(() => {
-    //         console.log('faLineup')
-    //       })
-    //     await axios
-    //       .post(apiToSendIncidents, incidentsResBody)
-    //       .catch((error) => {
-    //         console.log(error.message)
-    //       })
-    //       .then(() => {
-    //         console.log('faIncident')
-    //       })
-
-    //     // results.push(forwardedResponse)
-    //   } catch (error) {
-    //     console.error(
-    //       'hata mesajı :',
-    //       error.message,
-    //       `https://api.sofascore.com/api/v1/event/${eventid}/incidents`
-    //     )
-    //   }
-    // }
-    // let eventIdFinisedOrEtc = ['']
-    // // return results
-
-    // const promises = eventIdFinisedOrEtc.map(async (eventid) => {
-    //   await sleep(getRandomWaitTime())
-    //   console.log(eventid, 'eventid')
-
-    //   try {
-    //     const incidentsResponse = await axios
-    //       .get(`https://api.sofascore.com/api/v1/event/${eventid}/incidents`)
-    //       .catch((error) => {
-    //         console.log(error.message)
-    //       })
-
-    //     console.log('incidents atıldı')
-
-    //     await sleep(getRandomWaitTime())
-
-    //     const lineupsResponse = await axios
-    //       .get(`https://api.sofascore.com/api/v1/event/${eventid}/lineups`)
-    //       .catch((error) => {
-    //         console.log('hata:', error.message)
-    //       })
-
-    //     console.log('lineups atıldı')
-
-    //     const incidentsResBody = {
-    //       eventid: eventid,
-    //       data: incidentsResponse.data,
-    //     }
-    //     const lineupsResBody = {
-    //       eventid: eventid,
-    //       data: lineupsResponse.data,
-    //     }
-    //     await sleep(getRandomWaitTime())
-
-    //     await axios
-    //       .post(apiToSendLineups, lineupsResponse.data)
-    //       .catch((error) => {
-    //         console.log('hata:', error.message)
-    //       })
-
-    //     console.log('faLineup')
-    //     await sleep(getRandomWaitTime())
-
-    //     await axios
-    //       .post(apiToSendIncidents, incidentsResBody)
-    //       .catch((error) => {
-    //         console.log(error.message)
-    //       })
-
-    //     console.log('faIncident')
-    //   } catch (error) {
-    //     console.error(
-    //       'hata mesajı:',
-    //       error.message,
-    //       `https://api.sofascore.com/api/v1/event/${eventid}/incidents`
-    //     )
-    //   }
-    // })
-
-    // await Promise.all(promises)
-
-
     for (const eventid of eventIdFinisedOrEtc) {
-      await sleep(getRandomWaitTime());
-      console.log(eventid, 'eventid');
-      
+      await sleep(getRandomWaitTime())
+      console.log(eventid, 'eventid')
+
       try {
         const incidentsResponse = await axios
           .get(`https://api.sofascore.com/api/v1/event/${eventid}/incidents`)
           .catch((error) => {
-            console.log(error.message);
-          });
-        
-        console.log('incidents atıldı');
-        
-        await sleep(getRandomWaitTime());
-        
-        const lineupsResponse = await axios
-          .get(`https://api.sofascore.com/api/v1/event/${eventid}/lineups`)
-          .catch((error) => {
-            console.log('hata:', error.message);
-          });
-        
-        console.log('lineups atıldı');
-        
+            console.log(error.message)
+          })
+
+        console.log('incidents atıldı')
+
+        await sleep(getRandomWaitTime())
+
+        // const lineupsResponse = await axios
+        //   .get(`https://api.sofascore.com/api/v1/event/${eventid}/lineups`)
+        //   .catch((error) => {
+        //     console.log('hata:', error.message)
+        //   })
+
+        console.log('lineups atıldı')
+
         const incidentsResBody = {
           eventid: eventid,
           data: incidentsResponse.data,
-        };
-        const lineupsResBody = {
-          eventid: eventid,
-          data: lineupsResponse.data,
         }
-        
-        await axios
-          .post(apiToSendLineups, lineupsResBody)
-          .catch((error) => {
-            console.log('hata:', error.message);
-          });
-        
-        console.log('faLineup');
-        
+        // const lineupsResBody = {
+        //   eventid: eventid,
+        //   data: lineupsResponse.data,
+        // }
+
+        // await axios.post(apiToSendLineups, lineupsResBody).catch((error) => {
+        //   console.log('hata:', error.message)
+        // })
+
+        // console.log('faLineup')
+
         await axios
           .post(apiToSendIncidents, incidentsResBody)
           .catch((error) => {
-            console.log(error.message);
-          });
-        
-        console.log('faIncident');
+            console.log(error.message)
+          })
+
+        console.log('faIncident')
       } catch (error) {
         console.error(
           'hata mesajı:',
           error.message,
           `https://api.sofascore.com/api/v1/event/${eventid}/incidents`
-        );
+        )
       }
     }
 
     eventIdFinisedOrEtc = []
   }
 }
-
-// async function lineupsCronJob() {
-//   eventArray.forEach((event) => {
-//     if (
-//       event.statusDesc !== 'Not started' &&
-//       event.statusDesc !== 'Postponed'
-//     ) {
-//       eventIdFinisedOrEtc.push(event.id)
-//     }
-//   })
-//   console.log(eventArray, 'eventarray')
-//   const apiToSendLineups = 'http://localhost:3000/api/lineups'
-//   if (eventIdFinisedOrEtc) {
-//     const results = []
-
-//     for (const eventid of eventIdFinisedOrEtc) {
-//       await new Promise((resolve) => setTimeout(resolve, getRandomWaitTime()))
-//       try {
-//         const lineupsResponse = await axios
-//           .get(`https://api.sofascore.com/api/v1/event/${eventid}/lineups`)
-//           .catch((error) => {
-//             console.log('hata: ', error.message)
-//           })
-//         console.log('lineups atıldı')
-//         const forwardedResponse = await axios
-//           .post(apiToSend, lineupsResponse.data)
-//           .catch((error) => {
-//             console.log('hata: ', error.message)
-//           })
-//         console.log('livescore atıldı')
-//         results.push(forwardedResponse)
-//       } catch (error) {
-//         console.error(
-//           'hata mesajı :',
-//           error.message,
-//           `https://api.sofascore.com/api/v1/event/${eventid}/lineups`
-//         )
-//       }
-//     }
-
-//     return results
-//   }
-// }
 
 // async function logSender() {
 //   const logFolderPath = path.join(__dirname, 'v1', 'logger', 'log')
