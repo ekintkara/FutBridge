@@ -1,5 +1,9 @@
 const axios = require('axios')
 const logger = require('../logger/FutCronLogger')
+const fs = require('fs')
+const path = require('path')
+const { schedule } = require('node-cron')
+const { log } = require('util')
 
 const leagueArray = [
   8, 11, 13, 14, 16, 17, 18, 19, 20, 22, 23, 24, 25, 32, 34, 35, 36, 37, 38, 39,
@@ -9,12 +13,14 @@ const leagueArray = [
   615, 649, 679, 955, 971, 1024, 1786, 11621,
 ]
 
-const eventIdArray = []
-const eventIdFinisedOrEtc = []
-const eventArray = []
-
+let eventIdArray = []
+let eventArray = []
+let eventIdFinisedOrEtc = []
 function getRandomWaitTime() {
   return Math.floor(Math.random() * (10000 - 5000 + 1)) + 5000
+}
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
 async function scheduledEventsCronJob() {
@@ -26,9 +32,6 @@ async function scheduledEventsCronJob() {
   yesterday.setDate(yesterday.getDate() - 1)
   dateRange.push(yesterday.toISOString().split('T')[0]) // dünün tarihi
 
-  const apiUrlscheduled =
-    'https://api.sofascore.com/api/v1/sport/football/scheduled-events/'
-
   // Tarih aralığını oluştur
   let currentDate = new Date(today)
   while (currentDate <= endDate) {
@@ -36,153 +39,434 @@ async function scheduledEventsCronJob() {
     currentDate.setDate(currentDate.getDate() + 1)
   }
 
-  console.log('tarihler', dateRange)
+  console.log('dateRange', dateRange)
 
   for (const date1 of dateRange) {
-    console.log('date', date1)
-    await new Promise((resolve) => setTimeout(resolve, getRandomWaitTime()))
-    const apiUrl1 = `${apiUrlscheduled}${date1}`
-    try {
-      const response = await axios.get(apiUrl1).catch((error) => {
-        logger.log({
-          level: 'error',
-          message: error,
+    console.log('for oncesi date1', date1)
+    await scheduledEventsJobsLoops(date1)
+  }
+}
+
+async function scheduledEventsJobsLoops(date1) {
+  const apiUrlscheduled =
+    'https://api.sofascore.com/api/v1/sport/football/scheduled-events/'
+  const apiToSend = 'http://localhost:3000/api/scheduledevents'
+  console.log('date1', date1)
+
+  await sleep(getRandomWaitTime())
+
+  const apiUrl1 = `${apiUrlscheduled}${date1}`
+
+  try {
+    const response = await axios.get(apiUrl1).catch((error) => {
+      console.log(error.message)
+    })
+
+    const eventResponse = response.data.events
+
+    for (const event of eventResponse) {
+      if (leagueArray.includes(event.tournament?.uniqueTournament?.id)) {
+        eventIdArray.push(event.id)
+        eventArray.push({
+          tournament: {
+            uniqueTournament: {
+              id: event.tournament.uniqueTournament.id,
+            },
+          },
+          status: {
+            description: event.status.description,
+            type: event.status.type,
+          },
+          winnerCode: event.winnerCode,
+          homeTeam: {
+            name: event.homeTeam.name,
+            slug: event.homeTeam.slug,
+            shortName: event.homeTeam.shortName,
+            id: event.homeTeam.id,
+          },
+          awayTeam: {
+            name: event.awayTeam.name,
+            slug: event.awayTeam.slug,
+            shortName: event.awayTeam.shortName,
+            id: event.awayTeam.id,
+          },
+          homeScore: {
+            current: event.homeScore.current,
+            display: event.homeScore.display,
+            period1: event.homeScore.period1,
+            period2: event.homeScore.period2,
+            normaltime: event.homeScore.normaltime,
+          },
+          awayScore: {
+            current: event.awayScore.current,
+            display: event.awayScore.display,
+            period1: event.awayScore.period1,
+            period2: event.awayScore.period2,
+            normaltime: event.awayScore.normaltime,
+          },
+          time: {
+            injuryTime1: event.time.injuryTime1,
+            injuryTime2: event.time.injuryTime2,
+            currentPeriodStartTimestamp: event.time.currentPeriodStartTimestamp,
+          },
+          id: event.id,
+          startTimestamp: event.startTimestamp,
+          slug: event.slug,
         })
-      })
+      }
+    }
+    // console.log(eventArray,"eventArray");
+    console.log(eventIdFinisedOrEtc, 'eventIdFinisedOrEtc')
+    for (const event of eventArray) {
+      if (
+        event.status?.type !== 'finished' ||
+        event.status?.type !== 'postponed'
+      ) {
+        eventIdFinisedOrEtc.push(event.id)
+      }
+    }
+    // console.log(eventArray[0].status.description,"tip");
 
-      const eventResponse = response.data.events
-      for (const event of eventResponse) {
-        if (leagueArray.includes(event.tournament.uniqueTournament.id)) {
-          const eventObj = {
-            id: event.id,
-            startTimestamp: event.startTimestamp,
-            statusDesc: event.status.description,
-            //...
-          }
-          eventIdArray.push(event.id)
-          eventArray.push(eventObj)
-        }
-      }
-      const futRequestBody = {
-        date: date1,
-        data: eventArray,
-      }
-      try {
-        await new Promise((resolve) => setTimeout(resolve, getRandomWaitTime()))
+    // const transformedData = eventArray.map((event) => {
+    //   const transformedEvent = {
+    //     tournament: {
+    //       uniqueTournament: {
+    //        id: event.tournament.uniqueTournament.id,
+    //       },
+    //     },
+    //     status: {
+    //       description: event.status ? event.status.description : undefined,
+    //       type: event.status.type,
+    //     },
+    //     winnerCode: event.winnerCode,
+    //     homeTeam: {
+    //       name: event.homeTeam.name,
+    //       slug: event.homeTeam.slug,
+    //       shortName: event.homeTeam.shortName,
+    //       id: event.homeTeam.id,
+    //     },
+    //     awayTeam: {
+    //       name: event.awayTeam.name,
+    //       slug: event.awayTeam.slug,
+    //       shortName: event.awayTeam.shortName,
+    //       id: event.awayTeam.id,
+    //     },
+    //     homeScore: {
+    //       current: event.homeScore.current,
+    //       display: event.homeScore.display,
+    //       period1: event.homeScore.period1,
+    //       period2: event.homeScore.period2,
+    //       normaltime: event.homeScore.normaltime,
+    //     },
+    //     awayScore: {
+    //       current: event.awayScore.current,
+    //       display: event.awayScore.display,
+    //       period1: event.awayScore.period1,
+    //       period2: event.awayScore.period2,
+    //       normaltime: event.awayScore.normaltime,
+    //     },
+    //     time: {
+    //       injuryTime1: event.time.injuryTime1,
+    //       injuryTime2: event.time.injuryTime2,
+    //       currentPeriodStartTimestamp: event.time.currentPeriodStartTimestamp,
+    //     },
+    //     id: event.id,
+    //     startTimestamp: event.startTimestamp,
+    //     slug: event.slug,
+    //   }
 
-        const livescoreReq = await axios.post(
-          'https://api20.futalert.co.uk/api/livescore/scheduledevents',
-          futRequestBody
-        )
-        return livescoreReq
-      } catch (error) {
-        console.error(
-          'hata mesajı :',
-          error.message,
-          'https://api20.futalert.co.uk/api/livescore/scheduledevents'
-        )
-      }
+    //   return transformedEvent
+    // })
+
+    const futRequestBody = {
+      date: date1,
+      data: eventArray,
+    }
+    // eventArray.forEach((event) => {
+    //   if (
+    //     event.status.description !== 'Not started' &&
+    //     event.status.description !== 'Postponed'
+    //   ) {
+    //     eventIdFinisedOrEtc.push(event.id)
+    //   }
+    // })
+
+    try {
+      await sleep(getRandomWaitTime())
+
+      const livescoreReq = await axios
+        .post(apiToSend, futRequestBody)
+        .catch((error) => {
+          console.log(error.message)
+        })
+        .finally(() => {
+          eventArray = []
+        })
+      return livescoreReq
     } catch (error) {
       console.error(
-        'hata mesajı :',
+        'livescoreReq hata mesajı :',
         error.message,
         'https://api20.futalert.co.uk/api/livescore/scheduledevents'
       )
     }
+  } catch (error) {
+    console.error(
+      'apiUrlscheduled hata mesajı :',
+      error,
+      'https://api20.futalert.co.uk/api/livescore/scheduledevents'
+    )
   }
 }
 
-async function incidentsCronJob() {
-  eventArray.forEach((event) => {
-    if (
-      event.statusDesc !== 'Not started' &&
-      event.statusDesc !== 'Postponed'
-    ) {
-      eventIdFinisedOrEtc.push(event.id)
-    }
-  })
-  if (eventIdFinisedOrEtc) {
-    const results = []
+async function incidentsAndLineupsCronJob() {
+  if (eventIdFinisedOrEtc.length > 0) {
+    // const results = []
+    const apiToSendIncidents = 'http://localhost:3000/api/incidents'
+    const apiToSendLineups = 'http://localhost:3000/api/lineups'
+    console.log(eventIdFinisedOrEtc, 'eventIdFinisedOrEtc')
+
+    // for (const eventid of eventIdFinisedOrEtc) {
+    //   await new Promise((resolve) => setTimeout(resolve, getRandomWaitTime()))
+    //   console.log(eventIdFinisedOrEtc, 'eventid')
+    //   try {
+    //     const incidentsResponse = await axios
+    //       .get(`https://api.sofascore.com/api/v1/event/${eventid}/incidents`)
+    //       .catch((error) => {
+    //         console.log(error.message)
+    //       })
+    //       .then(() => {
+    //         console.log('incidents atıldı')
+    //       })
+    //     await new Promise((resolve) => setTimeout(resolve, getRandomWaitTime()))
+    //     const lineupsResponse = await axios
+    //       .get(`https://api.sofascore.com/api/v1/event/${eventid}/lineups`)
+    //       .catch((error) => {
+    //         console.log('hata: ', error.message)
+    //       })
+    //       .then(() => {
+    //         console.log('lineups atıldı')
+    //       })
+
+    //     const incidentsResBody = {
+    //       eventid: eventid,
+    //       data: incidentsResponse.data,
+    //     }
+    //     await axios
+    //       .post(apiToSendLineups, lineupsResponse.data)
+    //       .catch((error) => {
+    //         console.log('hata: ', error.message)
+    //       })
+    //       .then(() => {
+    //         console.log('faLineup')
+    //       })
+    //     await axios
+    //       .post(apiToSendIncidents, incidentsResBody)
+    //       .catch((error) => {
+    //         console.log(error.message)
+    //       })
+    //       .then(() => {
+    //         console.log('faIncident')
+    //       })
+
+    //     // results.push(forwardedResponse)
+    //   } catch (error) {
+    //     console.error(
+    //       'hata mesajı :',
+    //       error.message,
+    //       `https://api.sofascore.com/api/v1/event/${eventid}/incidents`
+    //     )
+    //   }
+    // }
+    // let eventIdFinisedOrEtc = ['']
+    // // return results
+
+    // const promises = eventIdFinisedOrEtc.map(async (eventid) => {
+    //   await sleep(getRandomWaitTime())
+    //   console.log(eventid, 'eventid')
+
+    //   try {
+    //     const incidentsResponse = await axios
+    //       .get(`https://api.sofascore.com/api/v1/event/${eventid}/incidents`)
+    //       .catch((error) => {
+    //         console.log(error.message)
+    //       })
+
+    //     console.log('incidents atıldı')
+
+    //     await sleep(getRandomWaitTime())
+
+    //     const lineupsResponse = await axios
+    //       .get(`https://api.sofascore.com/api/v1/event/${eventid}/lineups`)
+    //       .catch((error) => {
+    //         console.log('hata:', error.message)
+    //       })
+
+    //     console.log('lineups atıldı')
+
+    //     const incidentsResBody = {
+    //       eventid: eventid,
+    //       data: incidentsResponse.data,
+    //     }
+    //     const lineupsResBody = {
+    //       eventid: eventid,
+    //       data: lineupsResponse.data,
+    //     }
+    //     await sleep(getRandomWaitTime())
+
+    //     await axios
+    //       .post(apiToSendLineups, lineupsResponse.data)
+    //       .catch((error) => {
+    //         console.log('hata:', error.message)
+    //       })
+
+    //     console.log('faLineup')
+    //     await sleep(getRandomWaitTime())
+
+    //     await axios
+    //       .post(apiToSendIncidents, incidentsResBody)
+    //       .catch((error) => {
+    //         console.log(error.message)
+    //       })
+
+    //     console.log('faIncident')
+    //   } catch (error) {
+    //     console.error(
+    //       'hata mesajı:',
+    //       error.message,
+    //       `https://api.sofascore.com/api/v1/event/${eventid}/incidents`
+    //     )
+    //   }
+    // })
+
+    // await Promise.all(promises)
+
 
     for (const eventid of eventIdFinisedOrEtc) {
-      await new Promise((resolve) => setTimeout(resolve, getRandomWaitTime()))
+      await sleep(getRandomWaitTime());
+      console.log(eventid, 'eventid');
+      
       try {
         const incidentsResponse = await axios
           .get(`https://api.sofascore.com/api/v1/event/${eventid}/incidents`)
           .catch((error) => {
-            console.log('hata sofascore: ', error.message)
-          })
-        console.log('incidents atıldı')
-        const forwardedResponse = await axios
-          .post(
-            'https://api20.futalert.co.uk/api/livescore/incidents',
-            incidentsResponse.data
-          )
-          .catch((error) => {
-            console.log('hata futalert: ', error.message)
-          })
-        console.log('livescore atıldı')
-        results.push(forwardedResponse)
-      } catch (error) {
-        console.error(
-          'hata mesajı :',
-          error.message,
-          `https://api.sofascore.com/api/v1/event/${eventid}/incidents`
-        )
-      }
-    }
-
-    return results
-  }
-}
-
-async function lineupsCronJob() {
-  eventArray.forEach((event) => {
-    if (
-      event.statusDesc !== 'Not started' &&
-      event.statusDesc !== 'Postponed'
-    ) {
-      eventIdFinisedOrEtc.push(event.id)
-    }
-  })
-  console.log(eventArray, 'eventarray')
-  if (eventIdFinisedOrEtc) {
-    const results = []
-
-    for (const eventid of eventIdFinisedOrEtc) {
-      await new Promise((resolve) => setTimeout(resolve, getRandomWaitTime()))
-      try {
+            console.log(error.message);
+          });
+        
+        console.log('incidents atıldı');
+        
+        await sleep(getRandomWaitTime());
+        
         const lineupsResponse = await axios
           .get(`https://api.sofascore.com/api/v1/event/${eventid}/lineups`)
           .catch((error) => {
-            console.log('hata: ', error.message)
-          })
-        console.log('lineups atıldı')
-        const forwardedResponse = await axios
-          .post(
-            'https://api20.futalert.co.uk/api/livescore/lineups',
-            lineupsResponse.data
-          )
+            console.log('hata:', error.message);
+          });
+        
+        console.log('lineups atıldı');
+        
+        const incidentsResBody = {
+          eventid: eventid,
+          data: incidentsResponse.data,
+        };
+        const lineupsResBody = {
+          eventid: eventid,
+          data: lineupsResponse.data,
+        }
+        
+        await axios
+          .post(apiToSendLineups, lineupsResBody)
           .catch((error) => {
-            console.log('hata: ', error.message)
-          })
-        console.log('livescore atıldı')
-        results.push(forwardedResponse)
+            console.log('hata:', error.message);
+          });
+        
+        console.log('faLineup');
+        
+        await axios
+          .post(apiToSendIncidents, incidentsResBody)
+          .catch((error) => {
+            console.log(error.message);
+          });
+        
+        console.log('faIncident');
       } catch (error) {
         console.error(
-          'hata mesajı :',
+          'hata mesajı:',
           error.message,
-          `https://api.sofascore.com/api/v1/event/${eventid}/lineups`
-        )
+          `https://api.sofascore.com/api/v1/event/${eventid}/incidents`
+        );
       }
     }
 
-    return results
+    eventIdFinisedOrEtc = []
   }
 }
 
+// async function lineupsCronJob() {
+//   eventArray.forEach((event) => {
+//     if (
+//       event.statusDesc !== 'Not started' &&
+//       event.statusDesc !== 'Postponed'
+//     ) {
+//       eventIdFinisedOrEtc.push(event.id)
+//     }
+//   })
+//   console.log(eventArray, 'eventarray')
+//   const apiToSendLineups = 'http://localhost:3000/api/lineups'
+//   if (eventIdFinisedOrEtc) {
+//     const results = []
+
+//     for (const eventid of eventIdFinisedOrEtc) {
+//       await new Promise((resolve) => setTimeout(resolve, getRandomWaitTime()))
+//       try {
+//         const lineupsResponse = await axios
+//           .get(`https://api.sofascore.com/api/v1/event/${eventid}/lineups`)
+//           .catch((error) => {
+//             console.log('hata: ', error.message)
+//           })
+//         console.log('lineups atıldı')
+//         const forwardedResponse = await axios
+//           .post(apiToSend, lineupsResponse.data)
+//           .catch((error) => {
+//             console.log('hata: ', error.message)
+//           })
+//         console.log('livescore atıldı')
+//         results.push(forwardedResponse)
+//       } catch (error) {
+//         console.error(
+//           'hata mesajı :',
+//           error.message,
+//           `https://api.sofascore.com/api/v1/event/${eventid}/lineups`
+//         )
+//       }
+//     }
+
+//     return results
+//   }
+// }
+
+// async function logSender() {
+//   const logFolderPath = path.join(__dirname, 'v1', 'logger', 'log')
+//   const logFilePath = path.join(logFolderPath, 'log.json')
+
+//   fs.readFile(logFilePath, 'utf8', (err, data) => {
+//     if (err) {
+//       console.error('Log Error', err)
+//       return
+//     }
+//     const logs = JSON.parse(data)
+//     axios
+//       .post('https://api20.futalert.co.uk/api/livescore/logs', logs)
+//       .then((response) => {
+//         console.log("Loglar başarıyla API'ye gönderildi:", response.data)
+//       })
+//       .catch((error) => {
+//         console.error("Logları API'ye gönderirken bir hata oluştu:", error)
+//       })
+//   })
+// }
+
 module.exports = {
   scheduledEventsCronJob,
-  incidentsCronJob,
-  lineupsCronJob,
+  incidentsAndLineupsCronJob,
 }
