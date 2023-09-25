@@ -1,7 +1,5 @@
 const axios = require('axios')
 const logger = require('../logger/FutCronLogger')
-const fs = require('fs')
-const path = require('path')
 const { schedule } = require('node-cron')
 const { log } = require('util')
 
@@ -16,6 +14,7 @@ const leagueArray = [
 let eventIdArray = []
 let eventArray = []
 let eventIdFinisedOrEtc = []
+
 function getRandomWaitTime() {
   return Math.floor(Math.random() * (10000 - 5000 + 1)) + 5000
 }
@@ -50,7 +49,7 @@ async function scheduledEventsCronJob() {
 async function scheduledEventsJobsLoops(date1) {
   const apiUrlscheduled =
     'https://api.sofascore.com/api/v1/sport/football/scheduled-events/'
-  const apiToSend = 'http://localhost:63949/api/livescore/scheduledevents'
+  const apiToSend = 'https://api20.futalert.co.uk/api/livescore/scheduledevents'
   console.log('date1', date1)
 
   await sleep(getRandomWaitTime())
@@ -58,6 +57,7 @@ async function scheduledEventsJobsLoops(date1) {
   const apiUrl1 = `${apiUrlscheduled}${date1}`
 
   try {
+    await sleep(getRandomWaitTime())
     const response = await axios.get(apiUrl1).catch((error) => {
       console.log(error.message)
     })
@@ -116,13 +116,19 @@ async function scheduledEventsJobsLoops(date1) {
       }
     }
 
-    console.log(eventIdFinisedOrEtc, 'eventIdFinisedOrEtc')
     for (const event of eventArray) {
       if (
         event.status?.type !== 'finished' ||
         event.status?.type !== 'postponed'
       ) {
-        eventIdFinisedOrEtc.push(event.id)
+        const eventData = {
+          eventId: event.id,
+          homeTeamId: event.homeTeam.id,
+          homeTeamName: event.homeTeam.name,
+          awayTeamId: event.awayTeam.id,
+          awayTeamName: event.awayTeam.name,
+        }
+        eventIdFinisedOrEtc.push(eventData)
       }
     }
 
@@ -161,16 +167,18 @@ async function scheduledEventsJobsLoops(date1) {
 
 async function incidentsAndLineupsCronJob() {
   if (eventIdFinisedOrEtc.length > 0) {
-    const apiToSendIncidents = 'http://localhost:63949/api/livescore/incidents'
-    const apiToSendLineups = 'http://localhost:3000/api/lineups'
+    const apiToSendIncidents = 'https://api20.futalert.co.uk/api/livescore/incidents'
+    const apiToSendLineups = 'https://api20.futalert.co.uk/api/livescore/lineups'
     console.log(eventIdFinisedOrEtc, 'eventIdFinisedOrEtc')
-    for (const eventid of eventIdFinisedOrEtc) {
+    for (const eventData of eventIdFinisedOrEtc) {
       await sleep(getRandomWaitTime())
-      console.log(eventid, 'eventid')
+      console.log(eventData.eventId, 'eventid')
 
       try {
         const incidentsResponse = await axios
-          .get(`https://api.sofascore.com/api/v1/event/${eventid}/incidents`)
+          .get(
+            `https://api.sofascore.com/api/v1/event/${eventData.eventId}/incidents`
+          )
           .catch((error) => {
             console.log(error.message)
           })
@@ -179,28 +187,32 @@ async function incidentsAndLineupsCronJob() {
 
         await sleep(getRandomWaitTime())
 
-        // const lineupsResponse = await axios
-        //   .get(`https://api.sofascore.com/api/v1/event/${eventid}/lineups`)
-        //   .catch((error) => {
-        //     console.log('hata:', error.message)
-        //   })
+        const lineupsResponse = await axios
+          .get(
+            `https://api.sofascore.com/api/v1/event/${eventData.eventId}/lineups`
+          )
+          .catch((error) => {
+            console.log('hata:', error.message)
+          })
 
         console.log('lineups atıldı')
 
         const incidentsResBody = {
-          eventid: eventid,
+          eventId: eventData.eventId,
+          eventData: eventData,
           data: incidentsResponse.data,
         }
-        // const lineupsResBody = {
-        //   eventid: eventid,
-        //   data: lineupsResponse.data,
-        // }
+        const lineupsResBody = {
+          eventId: eventData.eventId,
+          eventData: eventData,
+          data: lineupsResponse.data,
+        }
 
-        // await axios.post(apiToSendLineups, lineupsResBody).catch((error) => {
-        //   console.log('hata:', error.message)
-        // })
+        await axios.post(apiToSendLineups, lineupsResBody).catch((error) => {
+          console.log('hata:', error.message)
+        })
 
-        // console.log('faLineup')
+        console.log('faLineup')
 
         await axios
           .post(apiToSendIncidents, incidentsResBody)
@@ -213,7 +225,7 @@ async function incidentsAndLineupsCronJob() {
         console.error(
           'hata mesajı:',
           error.message,
-          `https://api.sofascore.com/api/v1/event/${eventid}/incidents`
+          `https://api.sofascore.com/api/v1/event/${eventData.eventId}/incidents`
         )
       }
     }

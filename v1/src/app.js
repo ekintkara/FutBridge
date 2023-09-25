@@ -16,6 +16,7 @@ scheduledEventsCronJob()
 })
 .catch((error) => {
   console.error(error)
+  
 })
 
 
