@@ -29,9 +29,8 @@ async function scheduledEventsCronJob() {
   const dateRange = []
   const yesterday = new Date(today)
   yesterday.setDate(yesterday.getDate() - 1)
-  dateRange.push(yesterday.toISOString().split('T')[0]) // dünün tarihi
+  dateRange.push(yesterday.toISOString().split('T')[0]) 
 
-  // Tarih aralığını oluştur
   let currentDate = new Date(today)
   while (currentDate <= endDate) {
     dateRange.push(currentDate.toISOString().split('T')[0])
