@@ -22,16 +22,37 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
+// async function scheduledEventsCronJob() {
+//   const today = new Date()
+//   const endDate = new Date(today)
+//   endDate.setDate(endDate.getDate() + 2) // Bugünden itibaren 7 gün sonrasını al
+//   const dateRange = []
+//   const yesterday = new Date(today)
+//   yesterday.setDate(yesterday.getDate() - 1)
+//   dateRange.push(yesterday.toISOString().split('T')[0]) 
+
+//   let currentDate = new Date(today)
+//   while (currentDate <= endDate) {
+//     dateRange.push(currentDate.toISOString().split('T')[0])
+//     currentDate.setDate(currentDate.getDate() + 1)
+//   }
+
+//   console.log('dateRange', dateRange)
+
+//   for (const date1 of dateRange) {
+//     console.log('for oncesi date1', date1)
+//     await scheduledEventsJobsLoops(date1)
+//   }
+// }
 async function scheduledEventsCronJob() {
   const today = new Date()
+  const startDate = new Date(today)
+  startDate.setDate(startDate.getDate() - 7) // Bugünden itibaren 7 gün öncesini al
   const endDate = new Date(today)
   endDate.setDate(endDate.getDate() + 2) // Bugünden itibaren 7 gün sonrasını al
   const dateRange = []
-  const yesterday = new Date(today)
-  yesterday.setDate(yesterday.getDate() - 1)
-  dateRange.push(yesterday.toISOString().split('T')[0]) 
 
-  let currentDate = new Date(today)
+  let currentDate = new Date(startDate)
   while (currentDate <= endDate) {
     dateRange.push(currentDate.toISOString().split('T')[0])
     currentDate.setDate(currentDate.getDate() + 1)
@@ -44,7 +65,6 @@ async function scheduledEventsCronJob() {
     await scheduledEventsJobsLoops(date1)
   }
 }
-
 async function scheduledEventsJobsLoops(date1) {
   const apiUrlscheduled =
     'https://api.sofascore.com/api/v1/sport/football/scheduled-events/'
