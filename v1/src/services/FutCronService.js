@@ -8,7 +8,8 @@ const leagueArray = [
   40, 41, 44, 45, 52, 53, 76, 96, 136, 152, 155, 170, 171, 172, 182, 185, 187,
   192, 196, 202, 203, 215, 217, 218, 229, 238, 242, 282, 290, 295, 308, 309,
   312, 325, 328, 330, 336, 347, 355, 358, 373, 384, 410, 445, 463, 491, 544,
-  615, 649, 679, 955, 971, 1024, 1786, 11621,
+  615, 649, 679, 955, 971, 1024, 1786, 11621, 232, 1044, 1139, 1690, 1127,
+  10527, 13994, 214, 2054, 10640, 823, 2123,
 ]
 
 let eventIdArray = []
@@ -29,7 +30,7 @@ function sleep(ms) {
 //   const dateRange = []
 //   const yesterday = new Date(today)
 //   yesterday.setDate(yesterday.getDate() - 1)
-//   dateRange.push(yesterday.toISOString().split('T')[0]) 
+//   dateRange.push(yesterday.toISOString().split('T')[0])
 
 //   let currentDate = new Date(today)
 //   while (currentDate <= endDate) {
@@ -187,8 +188,10 @@ async function scheduledEventsJobsLoops(date1) {
 
 async function incidentsAndLineupsCronJob() {
   if (eventIdFinisedOrEtc.length > 0) {
-    const apiToSendIncidents = 'https://api20.futalert.co.uk/api/livescore/incidents'
-    const apiToSendLineups = 'https://api20.futalert.co.uk/api/livescore/lineups'
+    const apiToSendIncidents =
+      'https://api20.futalert.co.uk/api/livescore/incidents'
+    const apiToSendLineups =
+      'https://api20.futalert.co.uk/api/livescore/lineups'
     console.log(eventIdFinisedOrEtc, 'eventIdFinisedOrEtc')
     for (const eventData of eventIdFinisedOrEtc) {
       await sleep(getRandomWaitTime())
