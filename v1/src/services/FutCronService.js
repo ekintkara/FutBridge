@@ -49,9 +49,9 @@ function sleep(ms) {
 async function scheduledEventsCronJob() {
   const today = new Date()
   const startDate = new Date(today)
-  startDate.setDate(startDate.getDate() - 7) // Bugünden itibaren 7 gün öncesini al
+  startDate.setDate(startDate.getDate() - 4) // Bugünden itibaren 7 gün öncesini al
   const endDate = new Date(today)
-  endDate.setDate(endDate.getDate() + 2) // Bugünden itibaren 7 gün sonrasını al
+  endDate.setDate(endDate.getDate() + 3) // Bugünden itibaren 7 gün sonrasını al
   const dateRange = []
 
   let currentDate = new Date(startDate)
