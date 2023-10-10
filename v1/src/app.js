@@ -6,16 +6,16 @@ const {
 } = require('./services/FutCronService')
 
 cron.schedule('*/150 * * * *	', () => {
+  scheduledEventsCronJob()
+    .then(() => {
+      console.log('scheduledEventsCronJob completed')
+      return incidentsAndLineupsCronJob()
+    })
+    .catch((error) => {
+      console.error(error.message)
+    })
+
   console.log('job working', new Date())
- 
-})
-scheduledEventsCronJob()
-.then(() => {
-  console.log('scheduledEventsCronJob completed')
-  return incidentsAndLineupsCronJob()
-})
-.catch((error) => {
-  console.error(error.message)
 })
 
 // cron.schedule('*/60 * * * *	', () => {
