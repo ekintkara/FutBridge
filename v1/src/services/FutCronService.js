@@ -16,11 +16,8 @@ let eventIdArray = []
 let eventArray = []
 let eventIdFinisedOrEtc = []
 
-function getRandomWaitTime() {
-  return Math.floor(Math.random() * (10000 - 5000 + 1)) + 5000
-}
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms))
+function sleep() {
+  return new Promise((resolve) => setTimeout(resolve, 1000))
 }
 
 
@@ -52,12 +49,10 @@ async function scheduledEventsJobsLoops(date1) {
   const apiToSend = 'https://api20.futalert.co.uk/api/livescore/scheduledevents'
   console.log('date1', date1)
 
-  await sleep(getRandomWaitTime())
-
   const apiUrl1 = `${apiUrlscheduled}${date1}`
 
   try {
-    await sleep(getRandomWaitTime())
+    await sleep()
     const response = await axios.get(apiUrl1).catch((error) => {
       console.log(error.message)
     })
@@ -138,7 +133,7 @@ async function scheduledEventsJobsLoops(date1) {
     }
 
     try {
-      await sleep(getRandomWaitTime())
+      await sleep()
 
       const livescoreReq = await axios
         .post(apiToSend, futRequestBody)
@@ -173,7 +168,7 @@ async function incidentsAndLineupsCronJob() {
       'https://api20.futalert.co.uk/api/livescore/lineups'
     console.log(eventIdFinisedOrEtc, 'eventIdFinisedOrEtc')
     for (const eventData of eventIdFinisedOrEtc) {
-      await sleep(getRandomWaitTime())
+      await sleep()
       console.log(eventData.eventId, 'eventid')
 
       try {
@@ -186,9 +181,6 @@ async function incidentsAndLineupsCronJob() {
           })
 
         console.log('incidents atıldı')
-
-        await sleep(getRandomWaitTime())
-
         const lineupsResponse = await axios
           .get(
             `https://api.sofascore.com/api/v1/event/${eventData.eventId}/lineups`

@@ -5,7 +5,8 @@ const {
   logSender,
 } = require('./services/FutCronService')
 
-cron.schedule('*/150 * * * *	', () => {
+cron.schedule('*/120 * * * *	', () => {
+  console.log('job working', new Date())
   scheduledEventsCronJob()
     .then(() => {
       console.log('scheduledEventsCronJob completed')
@@ -14,8 +15,7 @@ cron.schedule('*/150 * * * *	', () => {
     .catch((error) => {
       console.error(error.message)
     })
-
-  console.log('job working', new Date())
+  console.log('job finished', new Date())
 })
 
 // cron.schedule('*/60 * * * *	', () => {
