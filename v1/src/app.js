@@ -2,7 +2,6 @@ const cron = require('node-cron')
 const {
   scheduledEventsCronJob,
   incidentsAndLineupsCronJob,
-  logSender,
 } = require('./services/FutCronService')
 
 cron.schedule('*/120 * * * *	', () => {

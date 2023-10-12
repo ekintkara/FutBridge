@@ -1,5 +1,5 @@
 const axios = require('axios')
-const logger = require('../logger/FutCronLogger')
+// const logger = require('../logger/FutCronLogger')
 const { schedule } = require('node-cron')
 const { log } = require('util')
 
