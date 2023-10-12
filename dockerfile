@@ -1,5 +1,6 @@
 FROM node:slim
 WORKDIR /app
+COPY ./package*.json ./
 COPY ./v1/ ./v1
 
 RUN npm install
