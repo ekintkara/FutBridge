@@ -6,10 +6,7 @@ const {
 
 cron.schedule('*/120 * * * *	', () => {
   console.log('job working', new Date())
- 
-  console.log('job finished', new Date())
-})
-scheduledEventsCronJob()
+ scheduledEventsCronJob()
 .then(() => {
   console.log('scheduledEventsCronJob completed')
   return incidentsAndLineupsCronJob()
@@ -17,6 +14,9 @@ scheduledEventsCronJob()
 .catch((error) => {
   console.error(error.message)
 })
+  console.log('job finished', new Date())
+})
+
 // cron.schedule('*/60 * * * *	', () => {
 
 // })
