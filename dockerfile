@@ -2,7 +2,5 @@ FROM node:18
 WORKDIR /app
 COPY package*.json ./
 COPY ./v1/ ./v1
-
-RUN npm install --legacy-peer-deps -force
-
+RUN npm install --registry=https://registry.yarnpkg.com -force
 CMD ["node", "v1/src/app.js"]
