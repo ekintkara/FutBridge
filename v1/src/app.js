@@ -6,17 +6,17 @@ const {
 
 cron.schedule('*/120 * * * *	', () => {
   console.log('job working', new Date())
-  scheduledEventsCronJob()
-    .then(() => {
-      console.log('scheduledEventsCronJob completed')
-      return incidentsAndLineupsCronJob()
-    })
-    .catch((error) => {
-      console.error(error.message)
-    })
+ 
   console.log('job finished', new Date())
 })
-
+scheduledEventsCronJob()
+.then(() => {
+  console.log('scheduledEventsCronJob completed')
+  return incidentsAndLineupsCronJob()
+})
+.catch((error) => {
+  console.error(error.message)
+})
 // cron.schedule('*/60 * * * *	', () => {
 
 // })
